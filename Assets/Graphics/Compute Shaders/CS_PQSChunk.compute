@@ -1,0 +1,191 @@
+// ReSharper disable CppInconsistentNaming
+
+#pragma kernel Main
+#pragma kernel Normal
+#pragma kernel Brim
+
+#include "Assets/Plugins/FastNoiseLite.hlsl"
+
+struct NoiseMod
+{
+    float Height;
+    
+    fnl_noise_type NoiseType;
+    int NoiseSeed;
+    float NoiseFrequency;
+    
+    fnl_fractal_type FractalType;
+    int FractalOctaves;
+    float FractalLacunarity;
+    float FractalGain;
+    float FractalWeightedStrength;
+    float FractalPingPongStrength;
+    
+    fnl_cellular_distance_func CellularDistanceFunction;
+    fnl_cellular_return_type CellularReturnType;
+    float CellularJitter;
+    
+    float GetElevation(float3 sphere)
+    {
+        fnl_state noise = fnlCreateState();
+        
+        noise.noise_type = NoiseType;
+        noise.seed = NoiseSeed;
+        noise.frequency = NoiseFrequency;
+        
+        noise.fractal_type = FractalType;
+        noise.octaves = FractalOctaves;
+        noise.lacunarity = FractalLacunarity;
+        noise.gain = FractalGain;
+        noise.weighted_strength = FractalWeightedStrength;
+        noise.ping_pong_strength = FractalPingPongStrength;
+        
+        noise.cellular_distance_func = CellularDistanceFunction;
+        noise.cellular_return_type = CellularReturnType;
+        noise.cellular_jitter_mod = CellularJitter;
+        
+        float elevation = fnlGetNoise3D(noise, sphere.x, sphere.y, sphere.z) * Height;
+        return elevation;
+    }
+};
+
+RWStructuredBuffer<float3> PositionBuffer;
+RWStructuredBuffer<float3> NormalBuffer;
+RWStructuredBuffer<uint> TriangleBuffer;
+RWStructuredBuffer<int3> QuantizedNormalBuffer;
+RWStructuredBuffer<NoiseMod> NoiseModBuffer;
+
+static const float QuantizeMultiplier = 1000000.0;
+
+float3 LocalUp;
+float3 LocalRight;
+float3 LocalBack;
+float2 LocalPosition;
+float LocalScale;
+
+float Radius;
+
+int Resolution;
+int QuadCountPerAxis;
+int CenterQuadCountPerAxis;
+int VertexCount;
+int TriangleCount;
+
+float GetElevation(float3 sphere)
+{
+    uint count, stride;
+    NoiseModBuffer.GetDimensions(count, stride);
+    
+    if (count == 9999)
+    {
+        return Radius;
+    }
+    
+    float elevation = Radius;
+    for (uint i = 0; i < count; i++)
+    {
+        NoiseMod noiseMod = NoiseModBuffer[i];
+        elevation += noiseMod.GetElevation(sphere);
+    }
+    
+    return elevation;
+}
+
+[numthreads(16,16,1)]
+void Main(uint3 id : SV_DispatchThreadID)
+{
+    int vertexIndex = id.y * Resolution + id.x;
+    int quadIndex = id.y * QuadCountPerAxis + id.x;
+    int triangleIndex = quadIndex * 6;
+    
+    int offsetX = id.x - 1;
+    int offsetY = id.y - 1;
+    
+    float2 scaled = float2(offsetX, offsetY) / (float)CenterQuadCountPerAxis * LocalScale;
+    float3 cube = LocalUp + (scaled.x - 0.5 + LocalPosition.x) * 2.0  * LocalRight + (scaled.y - 0.5 + LocalPosition.y) * 2.0 * LocalBack;
+    float3 sphere = normalize(cube);
+    
+    PositionBuffer[vertexIndex] = sphere * GetElevation(sphere);
+        
+    if (id.x != (uint)QuadCountPerAxis && id.y != (uint)QuadCountPerAxis)
+    {
+        TriangleBuffer[triangleIndex] = (uint)vertexIndex;
+        TriangleBuffer[triangleIndex + 1] = (uint)(vertexIndex + 1);
+        TriangleBuffer[triangleIndex + 2] = (uint)(vertexIndex + Resolution);
+
+        TriangleBuffer[triangleIndex + 3] = (uint)(vertexIndex + 1);
+        TriangleBuffer[triangleIndex + 4] = (uint)(vertexIndex + Resolution + 1);
+        TriangleBuffer[triangleIndex + 5] = (uint)(vertexIndex + Resolution);
+    }
+}
+
+void AddToQuantizedNormalBuffer(uint index, float3 value)
+{
+    int3 quantized = value * QuantizeMultiplier;
+    
+    InterlockedAdd(QuantizedNormalBuffer[index].x, quantized.x);
+    InterlockedAdd(QuantizedNormalBuffer[index].y, quantized.y);
+    InterlockedAdd(QuantizedNormalBuffer[index].z, quantized.z);
+}
+
+[numthreads(64, 1, 1)]
+void Normal(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)TriangleCount)
+    {
+        return;
+    }
+    
+    int index = id.x * 3;
+    
+    int indexA = TriangleBuffer[index];
+    int indexB = TriangleBuffer[index + 1];
+    int indexC = TriangleBuffer[index + 2];
+    
+    float3 positionA = PositionBuffer[indexA];
+    float3 positionB = PositionBuffer[indexB];
+    float3 positionC = PositionBuffer[indexC];
+    
+    float3 a = positionB - positionA;
+    float3 b = positionC - positionA;
+    float3 normal = normalize(cross(a, b));
+    
+    AddToQuantizedNormalBuffer(indexA, normal);
+    AddToQuantizedNormalBuffer(indexB, normal);
+    AddToQuantizedNormalBuffer(indexC, normal);
+}
+
+bool IsBrim(int index)
+{
+    int x = (uint)index % (uint)Resolution - 1;
+    int y = (uint)index / (uint)Resolution - 1;
+    return x < 0 || x > CenterQuadCountPerAxis || y < 0 || y > CenterQuadCountPerAxis;
+}
+
+[numthreads(16,1,1)]
+void Brim(uint3 id : SV_DispatchThreadID)
+{
+    float3 quantizedNormal = QuantizedNormalBuffer[id.x];
+    NormalBuffer[id.x] = quantizedNormal / QuantizeMultiplier;
+    
+    if (!IsBrim(id.x))
+    {
+        return;
+    }
+    
+    int snap = id.x;
+    
+    int offsets[4] = {Resolution, -Resolution, 1, -1};
+    for (uint i = 0; i < 4; i++)
+    {
+        int index = id.x + offsets[i];
+        
+        if (index >= 0 && index < VertexCount && !IsBrim(index))
+        {
+            snap = index;
+            break;
+        }
+    }
+    
+    PositionBuffer[id.x] = normalize(PositionBuffer[snap]) * (length(PositionBuffer[snap]) * 0.98f);
+}

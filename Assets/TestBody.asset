@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d7a2f4858374bc6af20abae0613ab0e, type: 3}
+  m_Name: TestBody
+  m_EditorClassIdentifier: Assembly-CSharp::Celestial.CelestialBodySO
+  Name: TestBody
+  Material: {fileID: 2100000, guid: 1d43062f3e5a8de42b0031cc2eca3497, type: 2}
+  Position: {x: 10000, y: 0, z: 0}
+  Radius: 1000
+  NoiseMods:
+  - Height: 200
+    NoiseType: 2
+    NoiseSeed: 1337
+    NoiseFrequency: 2
+    FractalType: 1
+    FractalOctaves: 5
+    FractalLacunarity: 2
+    FractalGain: 0.5
+    FractalWeightedStrength: 0
+    FractalPingPongStrength: 0
+    CellularDistanceFunction: 1
+    CellularReturnType: 2
+    CellularJitter: 1
+  - Height: 10
+    NoiseType: 1
+    NoiseSeed: 1337
+    NoiseFrequency: 20
+    FractalType: 1
+    FractalOctaves: 5
+    FractalLacunarity: 2
+    FractalGain: 0.5
+    FractalWeightedStrength: 0
+    FractalPingPongStrength: 0
+    CellularDistanceFunction: 1
+    CellularReturnType: 2
+    CellularJitter: 1
