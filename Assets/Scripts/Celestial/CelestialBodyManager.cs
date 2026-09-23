@@ -15,11 +15,7 @@ namespace Celestial
                  GameObject go = new GameObject
                  {
                      name = so.Name,
-                     transform =
-                     {
-                         // localPosition = so.Position,
-                         parent = GameManager.Instance.WorldTransform 
-                     }
+                     transform = { parent = GameManager.Instance.WorldTransform }
                  };
                  go.AddComponent<PQSTerrain>().Initialize(so);
             }

@@ -80,7 +80,7 @@ namespace PQS
                 name = "PQSChunk mesh"
             };
             MeshFilter.mesh = _mesh;
-            MeshRenderer.material = _terrain.CelestialBodySO.Material;
+            MeshRenderer.material = _terrain.Material;
             Generate();
             
             if (DetailLevel < PQSManager.MIN_DETAIL_LEVEL)

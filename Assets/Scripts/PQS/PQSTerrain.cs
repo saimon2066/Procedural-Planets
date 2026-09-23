@@ -1,3 +1,4 @@
+// ReSharper disable Unity.PreferAddressByIdToGraphicsParams
 using System.Collections.Generic;
 using Celestial;
 using Game;
@@ -8,9 +9,12 @@ namespace PQS
     public class PQSTerrain : CelestialBodyMonoBehaviour
     {
         public readonly List<PQSChunk> Chunks = new List<PQSChunk>();
+
+        public Material Material;
+        public Texture2D GradientTexture;
         
         private readonly float[] _sqrThresholds = new float[PQSManager.MAX_DETAIL_LEVEL + 1];
-
+        
         private static float SqrThreshold(float radius, int detailLevel)
         {
             float threshold = radius * Mathf.Pow(0.5f, detailLevel);
@@ -22,6 +26,10 @@ namespace PQS
             base.Initialize(celestialBodySO);
             
             CelestialBodySO.ValidateSO += OnValidateSO;
+            
+            Material = new Material(PQSManager.Instance.TerrainShader);
+            GradientTexture = new Texture2D(128, 1);
+
 
             for (int i = 0; i < _sqrThresholds.Length; i++)
             {
@@ -36,6 +44,8 @@ namespace PQS
                 
                 PQSChunk chunk = new PQSChunk(terrain, localData);
             }
+            
+            SetMaterial();
         }
         
         private void OnDisable()
@@ -49,6 +59,7 @@ namespace PQS
             {
                 chunk.Generate();
             }
+            SetMaterial();
         }
 
         private void Update()
@@ -66,7 +77,7 @@ namespace PQS
                 {
                     continue;
                 }
-                
+                        
                 float sqrDistance = chunk.MeshRenderer.bounds.SqrDistance(player);
                 if (sqrDistance < _sqrThresholds[chunk.DetailLevel] && chunk.ChildrenCount <= 0)
                 {
@@ -97,6 +108,24 @@ namespace PQS
                 Bounds bounds = chunk.MeshRenderer.bounds;
                 Gizmos.DrawWireCube(bounds.center, bounds.size);
             }
+        }
+
+        private void SetMaterial()
+        {
+            const uint gradientResolution = 128;
+            
+            Color[] gradientColors = new Color[gradientResolution];
+
+            for (uint i = 0; i < gradientResolution; i++)
+            {
+                gradientColors[i] = CelestialBodySO.MaterialGradient.Evaluate(i / (gradientResolution - 1f));
+            }            
+            
+            GradientTexture.SetPixels(gradientColors);
+            GradientTexture.Apply();
+            
+            Material.SetVector("_MinMax", CelestialBodySO.MinMax);
+            Material.SetTexture("_GradientTexture", GradientTexture);
         }
     }
 }

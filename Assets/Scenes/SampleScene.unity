@@ -148,6 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a36d9f64ae044ea864cfc26e8b94d14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PQS.PQSManager
+  TerrainShader: {fileID: -6465566751694194690, guid: 9046e909ddcfb0146a3ce59531ec6e95, type: 3}
   ChunkCS: {fileID: 7200000, guid: bc8b035127bd15d439f88a8d8b208ded, type: 3}
 --- !u!4 &260991232
 Transform:
@@ -661,7 +662,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Celestial.CelestialBodyManager
   _celestialBodies:
-  - {fileID: 11400000, guid: 8d732dbb6c5fb664888b75d4010f9242, type: 2}
+  - {fileID: 11400000, guid: a74bedc44c92b7545a114512770c4e4e, type: 2}
 --- !u!4 &1155059174
 Transform:
   m_ObjectHideFlags: 0
