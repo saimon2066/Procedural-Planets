@@ -162,6 +162,8 @@ namespace PQS
             shader.SetBuffer(brim, "NormalBuffer", normalBuffer);
             shader.SetBuffer(brim, "QuantizedNormalBuffer", quantizedNormalBuffer);
             
+            shader.SetMatrix("LocalToWorldMatrix", _terrain.transform.localToWorldMatrix);
+            
             shader.SetVector("LocalUp", _localData.Up);
             shader.SetVector("LocalRight", _localData.Right);
             shader.SetVector("LocalBack", _localData.Back);

@@ -4,9 +4,9 @@ namespace PQS
 {
     public class PQSManager : MonoBehaviour
     {
-        public const int GLOBAL_RESOLUTION = 256;
+        public const int GLOBAL_RESOLUTION = 32;
         public const int MAX_DETAIL_LEVEL = 10;
-        public const int MIN_DETAIL_LEVEL = 1;
+        public const int MIN_DETAIL_LEVEL = 2;
         
         public static PQSManager Instance { get; private set; }
 

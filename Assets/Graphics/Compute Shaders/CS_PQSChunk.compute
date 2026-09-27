@@ -57,6 +57,8 @@ RWStructuredBuffer<NoiseMod> NoiseModBuffer;
 
 static const float QuantizeMultiplier = 1000000.0;
 
+float4x4 LocalToWorldMatrix;
+
 float3 LocalUp;
 float3 LocalRight;
 float3 LocalBack;
@@ -105,7 +107,7 @@ void Main(uint3 id : SV_DispatchThreadID)
     float3 cube = LocalUp + (scaled.x - 0.5 + LocalPosition.x) * 2.0  * LocalRight + (scaled.y - 0.5 + LocalPosition.y) * 2.0 * LocalBack;
     float3 sphere = normalize(cube);
     
-    PositionBuffer[vertexIndex] = sphere * GetElevation(sphere);
+    PositionBuffer[vertexIndex] = mul(LocalToWorldMatrix, float4(sphere * GetElevation(sphere), 1.0)).xyz;
         
     if (id.x != (uint)QuadCountPerAxis && id.y != (uint)QuadCountPerAxis)
     {
