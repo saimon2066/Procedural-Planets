@@ -10,65 +10,35 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d7a2f4858374bc6af20abae0613ab0e, type: 3}
-  m_Name: TestBody
+  m_Name: TestBody 1
   m_EditorClassIdentifier: Assembly-CSharp::Celestial.CelestialBodySO
   Name: TestBody
   Radius: 1000
   NoiseMods:
-  - Height: 150
-    NoiseType: 2
-    NoiseSeed: 67
-    NoiseFrequency: 1.8
-    FractalType: 1
+  - Height: 50
+    NoiseType: 1
+    NoiseSeed: 105
+    NoiseFrequency: 2
+    FractalType: 2
     FractalOctaves: 12
     FractalLacunarity: 2
     FractalGain: 0.5
     FractalWeightedStrength: 0
     FractalPingPongStrength: 0
     CellularDistanceFunction: 0
-    CellularReturnType: 4
-    CellularJitter: 1
+    CellularReturnType: 0
+    CellularJitter: 0
   TerrainGradient:
     serializedVersion: 2
-    key0: {r: 0.90188676, g: 0.4035346, b: 0.10720536, a: 1}
-    key1: {r: 0.8113208, g: 0.7303725, b: 0.44546098, a: 1}
-    key2: {r: 0.6603774, g: 0.5353967, b: 0.28284088, a: 0}
-    key3: {r: 0.5698112, g: 0.48423198, b: 0.3558632, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 12876
-    ctime1: 38165
-    ctime2: 51734
-    ctime3: 53585
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: 0
-    m_NumColorKeys: 4
-    m_NumAlphaKeys: 2
-  SlopeGradient:
-    serializedVersion: 2
-    key0: {r: 0.6603774, g: 0.59119093, b: 0.3127447, a: 1}
-    key1: {r: 0.4264151, g: 0.39051175, b: 0.24056247, a: 1}
+    key0: {r: 0.21156994, g: 0.3962264, b: 0.294309, a: 1}
+    key1: {r: 0.14299038, g: 0.5018867, b: 0.28855962, a: 1}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 32459
+    ctime0: 0
     ctime1: 65535
     ctime2: 0
     ctime3: 0
@@ -86,6 +56,36 @@ MonoBehaviour:
     atime7: 0
     m_Mode: 0
     m_ColorSpace: 0
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 2
+  SlopeGradient:
+    serializedVersion: 2
+    key0: {r: 1, g: 1, b: 1, a: 1}
+    key1: {r: 1, g: 1, b: 1, a: 1}
+    key2: {r: 0, g: 0, b: 0, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 65535
+    ctime2: 0
+    ctime3: 0
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
     m_NumColorKeys: 2
     m_NumAlphaKeys: 2
   Smoothstep: {x: 0.1, y: 0.25}

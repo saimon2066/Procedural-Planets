@@ -1,0 +1,64 @@
+// ReSharper disable CppInconsistentNaming
+
+#pragma kernel QuantizedMinMax
+
+#include "Assets/Graphics/Compute Shaders/PQS.hlsl"
+
+RWStructuredBuffer<int> QuantizedMinMaxBuffer;
+RWStructuredBuffer<NoiseMod> NoiseModBuffer;
+
+static const float QuantizeMultiplier = 1000000.0;
+
+float Radius;
+
+uint SampleCount;
+
+float GetElevation(float3 sphere)
+{
+    uint count, stride;
+    NoiseModBuffer.GetDimensions(count, stride);
+
+    if (count == 9999)
+    {
+        return Radius;
+    }
+
+    float elevation = Radius;
+    for (uint i = 0; i < count; i++)
+    {
+        NoiseMod noiseMod = NoiseModBuffer[i];
+        elevation += noiseMod.GetElevation(sphere);
+    }
+
+    return elevation;
+}
+
+void MinMaxInterlockedFloat(float value)
+{
+    int quantized = value * QuantizeMultiplier;
+
+    InterlockedMin(QuantizedMinMaxBuffer[0], quantized);
+    InterlockedMax(QuantizedMinMaxBuffer[1], quantized);
+}
+
+[numthreads(64, 1, 1)]
+void QuantizedMinMax (uint3 id : SV_DispatchThreadID)
+{
+    // fibonacci sphere
+    
+    const static float goldenAngle = 2.399963;
+    
+    float height = (float)id.x / (float)SampleCount * 2 - 1;
+    float ringRadius = sqrt(1 - height * height);
+    float azimuth = (float)id.x * goldenAngle;
+    
+    float3 pointOnUnitSphere = float3(
+        sin(azimuth) * ringRadius,
+        height,
+        cos(azimuth) * ringRadius
+    );
+    
+    float elevation = GetElevation(pointOnUnitSphere);
+    
+    MinMaxInterlockedFloat(elevation);
+}

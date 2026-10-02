@@ -80,7 +80,7 @@ namespace PQS
                 name = "PQSChunk mesh"
             };
             MeshFilter.mesh = _mesh;
-            MeshRenderer.material = _terrain.Material;
+            MeshRenderer.material = _terrain.MaterialController.TerrainMaterial;
             Generate();
             
             if (DetailLevel < PQSManager.MIN_DETAIL_LEVEL)
@@ -115,15 +115,18 @@ namespace PQS
             NativeArray<float3> normals = meshData.GetVertexData<float3>(1);
             NativeArray<uint> triangles = meshData.GetIndexData<uint>();
 
-            NativeArray<int3> quantizedNormals =
-                new NativeArray<int3>(vertexCount, Allocator.Temp, NativeArrayOptions.ClearMemory);
+            NativeArray<int3> quantizedNormals = new NativeArray<int3>(vertexCount, Allocator.Temp, NativeArrayOptions.ClearMemory);
+            NativeArray<float> minMax = new NativeArray<float>(2, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+
+            minMax[0] = float.MinValue;
+            minMax[1] = float.MaxValue; 
 
             const int floatSize = sizeof(float);
             const int float3Size = floatSize * 3;
             const int intSize = sizeof(int);
             const int int3Size = intSize * 3;
             const int noiseModSize = intSize * 6 + floatSize * 7;
-
+            
             ComputeBuffer positionBuffer = new ComputeBuffer(vertexCount, float3Size);
             positionBuffer.SetData(positions);
             ComputeBuffer normalBuffer = new ComputeBuffer(vertexCount, float3Size);
@@ -145,22 +148,22 @@ namespace PQS
 
             ComputeShader shader = PQSManager.Instance.ChunkCS;
 
-            int main = shader.FindKernel("Main");
-            int normal = shader.FindKernel("Normal");
-            int brim = shader.FindKernel("Brim");
+            int mainKernel = shader.FindKernel("Main");
+            int normalKernel = shader.FindKernel("Normal");
+            int brimKernel = shader.FindKernel("Brim");
 
-            shader.SetBuffer(main, "PositionBuffer", positionBuffer);
-            shader.SetBuffer(main, "TriangleBuffer", triangleBuffer);
-            shader.SetBuffer(main, "NoiseModBuffer", noiseModBuffer);
+            shader.SetBuffer(mainKernel, "PositionBuffer", positionBuffer);
+            shader.SetBuffer(mainKernel, "TriangleBuffer", triangleBuffer);
+            shader.SetBuffer(mainKernel, "NoiseModBuffer", noiseModBuffer);
             
-            shader.SetBuffer(normal, "PositionBuffer", positionBuffer);
-            shader.SetBuffer(normal, "TriangleBuffer", triangleBuffer);
-            shader.SetBuffer(normal, "NormalBuffer", normalBuffer);
-            shader.SetBuffer(normal, "QuantizedNormalBuffer", quantizedNormalBuffer);
+            shader.SetBuffer(normalKernel, "PositionBuffer", positionBuffer);
+            shader.SetBuffer(normalKernel, "TriangleBuffer", triangleBuffer);
+            shader.SetBuffer(normalKernel, "NormalBuffer", normalBuffer);
+            shader.SetBuffer(normalKernel, "QuantizedNormalBuffer", quantizedNormalBuffer);
 
-            shader.SetBuffer(brim, "PositionBuffer", positionBuffer);
-            shader.SetBuffer(brim, "NormalBuffer", normalBuffer);
-            shader.SetBuffer(brim, "QuantizedNormalBuffer", quantizedNormalBuffer);
+            shader.SetBuffer(brimKernel, "PositionBuffer", positionBuffer);
+            shader.SetBuffer(brimKernel, "NormalBuffer", normalBuffer);
+            shader.SetBuffer(brimKernel, "QuantizedNormalBuffer", quantizedNormalBuffer);
             
             shader.SetMatrix("LocalToWorldMatrix", _terrain.transform.localToWorldMatrix);
             
@@ -182,14 +185,14 @@ namespace PQS
             int triangleGroup = Mathf.CeilToInt(triangleCount / 64f);
             int brimGroup = Mathf.CeilToInt(vertexCount / 16f);
             
-            shader.Dispatch(main, mainGroup, mainGroup, 1);
-            shader.Dispatch(normal, triangleGroup, 1, 1);
-            shader.Dispatch(brim, brimGroup, 1, 1);
+            shader.Dispatch(mainKernel, mainGroup, mainGroup, 1);
+            shader.Dispatch(normalKernel, triangleGroup, 1, 1);
+            shader.Dispatch(brimKernel, brimGroup, 1, 1);
             
             quantizedNormalBuffer.Dispose();
             noiseModBuffer.Dispose();
             
-        AsyncGPUReadback.Request(positionBuffer, positionRequest =>
+            AsyncGPUReadback.Request(positionBuffer, positionRequest =>
             {
                 if (positionRequest.hasError || !IsActive)
                 {
@@ -227,12 +230,12 @@ namespace PQS
                             return;
                         }
                         triangleRequest.GetData<uint>().CopyTo(triangles);
-            
+                            
                         if (_mesh != null)
                         {
                             meshData.subMeshCount = 1;
                             meshData.SetSubMesh(0, new SubMeshDescriptor(0, triangleCount), MeshUpdateFlags.DontRecalculateBounds);
-                            
+                        
                             _mesh.Clear();
                             Mesh.ApplyAndDisposeWritableMeshData(meshDataArray, _mesh);
                             _mesh.RecalculateBounds();
@@ -244,7 +247,7 @@ namespace PQS
                         positionBuffer.Dispose();
                         normalBuffer.Dispose();
                         triangleBuffer.Dispose();
-
+                        
                         _meshGenerated?.Invoke();
                     }); 
                 });
